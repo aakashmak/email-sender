@@ -21,7 +21,7 @@ function buildSignatures(): { followup: string; initial: string } {
   const linkedin = process.env.SENDER_LINKEDIN || '#';
   return {
     followup: `Best,<br>\n${name}<br>\n<a href="${linkedin}">LinkedIn</a>`,
-    initial: `Best,<br>\n${name}<br>\n<a href="${linkedin}">LinkedIn</a><br>\n<br>\n<span style="color: #e67e22; font-size: 0.9em;">P.S. Just so you know, I found your email through Apollo. I like to be pretty transparent about these things, so no need to worry about any data leaks!</span>`,
+    initial: `Best,<br>\n${name}<br>\n<a href="${linkedin}">LinkedIn</a>`,
   };
 }
 
