@@ -11,6 +11,7 @@ interface SendEmailOptions {
   body: string;
   emailType: EmailType;
   attachResume?: boolean;
+  resumePath?: string;      // Override default resume path for this send
   threadId?: string;        // Gmail thread ID — threads follow-up into same conversation
   gmailMessageId?: string;  // RFC 2822 Message-ID of previous email for In-Reply-To header
 }
@@ -92,7 +93,8 @@ export class GmailSender {
   }
 
   async sendEmail(options: SendEmailOptions): Promise<SendResult> {
-    const { to, subject, body, emailType, attachResume = false, threadId, gmailMessageId } = options;
+    const { to, subject, body, emailType, attachResume = false, resumePath, threadId, gmailMessageId } = options;
+    const effectiveResumePath = resumePath || this.resumePath;
 
     try {
       // Get the appropriate signature based on email type
@@ -103,8 +105,8 @@ export class GmailSender {
 
       // Construct the email message
       let message: string;
-      if (attachResume && emailType === 'initial' && fs.existsSync(this.resumePath)) {
-        message = await this.createMessageWithAttachment(to, subject, htmlBody);
+      if (attachResume && emailType === 'initial' && fs.existsSync(effectiveResumePath)) {
+        message = await this.createMessageWithAttachment(to, subject, htmlBody, effectiveResumePath);
       } else {
         message = this.createHtmlMessage(to, subject, htmlBody, gmailMessageId);
       }
@@ -222,14 +224,16 @@ export class GmailSender {
   private async createMessageWithAttachment(
     to: string,
     subject: string,
-    htmlBody: string
+    htmlBody: string,
+    resumePath?: string
   ): Promise<string> {
     const boundary = `boundary_${Date.now()}`;
 
     // Read the resume file
-    const resumeContent = fs.readFileSync(this.resumePath);
+    const effectivePath = resumePath || this.resumePath;
+    const resumeContent = fs.readFileSync(effectivePath);
     const resumeBase64 = resumeContent.toString('base64');
-    const resumeFilename = path.basename(this.resumePath);
+    const resumeFilename = path.basename(effectivePath);
 
     const lines = [
       `From: ${this.senderEmail}`,

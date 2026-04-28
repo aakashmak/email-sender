@@ -36,3 +36,7 @@ data/*.csv
 data/prompts/data.md
 data/prompts/sender-background.md
 temp/
+
+# Apollo contact exports (contain personal data)
+apollo-contacts-export.csv
+*.apollo.csv

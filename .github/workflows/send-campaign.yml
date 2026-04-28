@@ -26,11 +26,15 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Download resume from Google Drive
+      - name: Download resumes from Google Drive
         run: |
           mkdir -p temp
-          curl -L "https://drive.google.com/uc?export=download&id=${{ secrets.RESUME_GDRIVE_ID }}" -o temp/Resume.pdf
-          echo "Resume downloaded: $(ls -la temp/Resume.pdf)"
+          curl -L "https://drive.google.com/uc?export=download&id=${{ secrets.RESUME_GDRIVE_DATA_SCIENTIST }}" -o temp/Resume_DataScientist.pdf
+          curl -L "https://drive.google.com/uc?export=download&id=${{ secrets.RESUME_GDRIVE_DATA_ANALYST }}" -o temp/Resume_DataAnalyst.pdf
+          curl -L "https://drive.google.com/uc?export=download&id=${{ secrets.RESUME_GDRIVE_BUSINESS_ANALYST }}" -o temp/Resume_BusinessAnalyst.pdf
+          curl -L "https://drive.google.com/uc?export=download&id=${{ secrets.RESUME_GDRIVE_AI }}" -o temp/Resume_AI.pdf
+          curl -L "https://drive.google.com/uc?export=download&id=${{ secrets.RESUME_GDRIVE_DATA_ENGINEER }}" -o temp/Resume_DataEngineer.pdf
+          echo "Resumes downloaded: $(ls -la temp/)"
 
       - name: Send approved emails
         env:

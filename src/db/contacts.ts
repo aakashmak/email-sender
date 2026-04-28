@@ -16,6 +16,7 @@ interface SupabaseContact {
   follow_up_3_subject: string | null;
   follow_up_3: string | null;
   research_summary: string | null;
+  resume_type: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -36,6 +37,7 @@ function toContact(row: SupabaseContact): Contact {
     follow_up_3_subject: row.follow_up_3_subject || undefined,
     follow_up_3: row.follow_up_3 || undefined,
     research_summary: row.research_summary || undefined,
+    resume_type: row.resume_type || undefined,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -155,6 +157,7 @@ export async function updateContactEmails(
     follow_up_3_subject: emails.follow_up_3_subject,
     follow_up_3: emails.follow_up_3,
     research_summary: emails.research_summary || null,
+    resume_type: emails.resume_type || 'data_scientist',
     is_emails_enriched: true,
     updated_at: new Date().toISOString(),
   };

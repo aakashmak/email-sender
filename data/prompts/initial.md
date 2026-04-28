@@ -1,7 +1,7 @@
 ## Cold Email Guidelines - Two Modes Based on Research
 
 **First, check the contact's title:**
-- Individual contributor (Engineer, Senior Engineer, AI/ML Engineer, Data Scientist, Researcher, etc.) → **always Mode B**, even if a job posting exists. ICs can't hire you — write peer-to-peer as a fellow engineer.
+- Individual contributor (Engineer, Senior Engineer, AI/ML Engineer, Data Scientist, Researcher, etc.) → **always Mode B**, even if a job posting exists. ICs can't hire you — write peer-to-peer as a fellow practitioner.
 - Decision-maker (Engineering Manager, VP Eng, CTO, Director, Head of, Recruiter, etc.) → use **Mode A** if a relevant job posting was found, otherwise **Mode B**.
 
 ---
@@ -17,17 +17,17 @@
 "I'm drawn to [Company] because [specific insight about their mission, expansion, product, or technical challenge] requires the kind of [relevant work type] I've been doing."
 
 - Base this on real research: a funding announcement, geographic expansion, a known technical challenge, a product they ship, or their market position
-- Be specific — not "you're building cool AI" but "the expansion across North America and Europe as the Western alternative to Chinese IoT modules"
-- Connect it directly to the type of engineering work you do (data pipelines, distributed systems, agentic AI, platform infra, etc.)
+- Be specific — not "you're building cool AI" but "the expansion across healthcare data infrastructure as a compliance-first platform"
+- Connect it directly to the type of work you do (data pipelines, ML models, AI agents, analytics platforms, NLP, etc.)
 
-### Paragraph 2 — Current Role (YourCompany)
-"I'm a software engineer with 2.5 years of experience. Most recently at YourCompany, I [one key achievement with a metric]. [Relevant subset of tech stack — always include Python and AWS, add others relevant to this company]."
+### Paragraph 2 — Current Role (Most Recent Company)
+"I'm a data scientist with 4+ years of experience. Most recently at [Most Recent Company], I [one key achievement with a metric]. [Relevant subset of tech stack]."
 
 - Pick the ONE most relevant achievement from the background list
-- Match the tech stack to what the company likely uses — always include Python and AWS, add others that fit (PostgreSQL, Docker, ECS, SQS, LangChain, React, Redis, etc.)
+- Match the tech stack to what the company likely uses — always include Python, add others that fit (SQL, Snowflake, Azure, AWS, Docker, PyTorch, LLMs, etc.)
 
-### Paragraph 3 — Previous Role (PreviousCompany)
-"Before that at PreviousCompany, I [what you led/built] with [key metric]."
+### Paragraph 3 — Previous Role (Previous Company)
+"Before that at [Previous Company], I [what you led/built] with [key metric]."
 
 - Pick the most relevant previous role achievement
 - Keep it to 1-2 sentences
@@ -55,30 +55,30 @@
 
 ## EXAMPLE (Mode B — no job posting):
 
-Subject: Expressing interest in Eagle Wireless
+Subject: Expressing interest in Samsara
 
 Hi Sarah,
 
-I'm drawn to Eagle Wireless because the expansion across North America, Europe, and APAC as the Western alternative to Chinese IoT/automotive modules requires the kind of data infrastructure and pipeline work I've been doing.
+I'm drawn to Samsara because building the data infrastructure behind real-time fleet intelligence at scale requires the kind of pipeline and ML work I've been doing.
 
-I'm a software engineer with 2.5 years of experience. Most recently at YourCompany, I built distributed AI agent pipelines on AWS (ECS Fargate + SQS) that scaled to 200+ parallel workers and cut processing from 12 hours to same-day. Python, PostgreSQL, Docker, AWS.
+I'm a data scientist with 4+ years of experience. Most recently at Feminine Intelligence Agency, I led end-to-end development of an AI conversational product integrating Grok-3 LLMs and Agentic AI, improving system responsiveness by 20%. Python, Docker, vector databases.
 
-Before that at PreviousCompany, I led a full platform migration from legacy PHP to React and built Flask microservices with Redis caching. Page load dropped 50%, infra costs 40%.
+Before that at Saama Technologies, I built AI-powered data validation models for healthcare clients including Abbvie and Moderna, enhancing data accuracy by 40% and saving 25+ hours of manual review weekly.
 
-I'd come in ready on backend infrastructure and data pipelines and scale quickly into whatever the team needs most.
+I'd come in ready on ML pipelines and data infrastructure and scale quickly into whatever the team needs most.
 
 ---
 
 ## EXAMPLE (Mode A — job posting found):
 
-Subject: Expressing interest in Halcyon
+Subject: Expressing interest in Databricks
 
 Hi Jacob,
 
-I'm drawn to Halcyon because building a resilient cloud platform at $1B scale for enterprise ransomware protection requires exactly the distributed infrastructure and pipeline work I've been doing.
+I'm drawn to Databricks because scaling the lakehouse platform for enterprise AI workloads requires exactly the data engineering and ML work I've been doing.
 
-I'm a software engineer with 2.5 years of experience. Most recently at YourCompany, I architected a distributed system on AWS (ECS Fargate + SQS + Lambda) with 200+ concurrent workers that cut AI pipeline runtime by 65%. Python, AWS, Docker, PostgreSQL.
+I'm a data scientist with 4+ years of experience. Most recently at Feminine Intelligence Agency, I built an AI conversational system with Grok-3 LLMs and vector search that improved system responsiveness by 20%. Python, Docker, Agentic AI.
 
-Before that at PreviousCompany, I designed an automated CI/CD pipeline achieving zero-downtime deployments and built Flask microservices supporting $4M in loan originations.
+Before that at Saama Technologies, I deployed NLP models for automated document extraction across healthcare clients, reducing manual workload by 80% and optimizing Snowflake ingestion pipelines for regulatory compliance.
 
-I'd come in ready on cloud infrastructure and platform reliability, and I'd love to be considered for the Cloud and DevOps Engineer role.
+I'd come in ready on data pipelines and ML model deployment, and I'd love to be considered for the Data Scientist role.

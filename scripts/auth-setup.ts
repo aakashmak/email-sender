@@ -1,4 +1,6 @@
 import * as http from 'http';
+import * as fs from 'fs';
+import * as path from 'path';
 import * as dotenv from 'dotenv';
 import { execSync } from 'child_process';
 import { google } from 'googleapis';
@@ -73,6 +75,14 @@ async function main() {
   });
 
   console.log('\n=== SUCCESS ===\n');
+  console.log('Refresh token:', refreshToken);
+
+  // Save refresh token to .env
+  const envPath = path.resolve(process.cwd(), '.env');
+  let envContent = fs.readFileSync(envPath, 'utf-8');
+  envContent = envContent.replace(/^GMAIL_REFRESH_TOKEN=.*$/m, `GMAIL_REFRESH_TOKEN=${refreshToken}`);
+  fs.writeFileSync(envPath, envContent);
+  console.log('✓ Saved GMAIL_REFRESH_TOKEN to .env');
 
   // Update GitHub environment secret
   try {

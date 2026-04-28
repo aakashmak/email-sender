@@ -43,10 +43,10 @@ ${this.senderInfo.background}
 **CRITICAL**: Only use achievements and metrics listed above. These are real, verifiable accomplishments. Do NOT invent or exaggerate metrics.
 
 **Which achievement to pick based on contact's role:**
-- AI / ML Engineer, AI Researcher, Data Scientist → emphasize LLM orchestration, RAG pipelines, multi-LLM system, NLP work
-- Fullstack / Frontend / Backend Engineer → emphasize React modernization (50% load time), Flask microservices ($4M loans), Redis caching, API optimization
-- Platform / Infrastructure / SRE / DevOps → emphasize ECS Fargate distributed system (65% runtime reduction), CI/CD, retry queue with DLQ
-- CTO / VP Eng / Engineering Manager → emphasize the most business-impactful metric (cost cut $25→$15, 90% faster document generation, or 65% runtime reduction)
+- AI / ML Engineer, AI Researcher, Data Scientist → emphasize Grok-3 LLM integration, Agentic AI, vector search (20% responsiveness improvement), NLP pipeline (80% workload reduction at Saama)
+- Data Engineer, Analytics Engineer, Backend Engineer → emphasize SQL/Snowflake pipeline optimization, Azure Data Factory, Spark + T-SQL (40% query time reduction), Docker microservices (40% picking time reduction)
+- Platform / Infrastructure / SRE / DevOps → emphasize Docker containerization, Azure DevOps CI/CD pipelines, Azure Data Factory with retry logic and automated validation
+- CTO / VP Eng / Engineering Manager / Director → emphasize most business-impactful metrics: 60% reduction in release time (Saama), 40% data accuracy improvement, 25+ hours/week saved, or 80% manual workload reduction
 
 ## Target Contact
 - Name: ${contact.name}
@@ -105,6 +105,15 @@ Provide your response in EXACTLY this format:
 ---RESEARCH---
 [Your research summary as bullet points]
 
+---RESUME_TYPE---
+[ONE of: data_scientist, data_analyst, business_analyst, ai_engineer, data_engineer]
+Pick based on the job posting found, or the contact's role if no posting:
+- data_analyst → Data Analyst, BI Analyst, Analytics Analyst, Reporting Analyst
+- business_analyst → Business Analyst, Product Analyst, Operations Analyst, Strategy Analyst
+- ai_engineer → AI Engineer, ML Engineer, AI Researcher, LLM Engineer, Machine Learning Engineer
+- data_engineer → Data Engineer, Analytics Engineer, ETL Engineer, Pipeline Engineer
+- data_scientist → Data Scientist, or anything else (default)
+
 ---INITIAL_SUBJECT---
 [Subject line for initial email]
 ---INITIAL_BODY---
@@ -142,6 +151,8 @@ Provide your response in EXACTLY this format:
     const contactSections = contacts
       .map(
         (c, i) => `---CONTACT_${i + 1}---
+---RESUME_TYPE---
+[ONE of: data_scientist, data_analyst, business_analyst, ai_engineer, data_engineer — based on job posting or ${c.name}'s role]
 ---INITIAL_SUBJECT---
 [Subject for ${c.name}]
 ---INITIAL_BODY---

@@ -102,6 +102,7 @@ export class SendRunner {
           body: email.body,
           emailType: email.type,
           attachResume: email.type === 'initial',
+          resumePath: this.getResumePath(email.contact.resume_type),
           threadId: email.type !== 'initial' ? record.thread_id || undefined : undefined,
           gmailMessageId: email.type !== 'initial' ? record.gmail_message_id || undefined : undefined,
         });
@@ -238,6 +239,18 @@ export class SendRunner {
         break;
     }
     return null;
+  }
+
+  private getResumePath(resumeType?: string): string {
+    const base = process.cwd();
+    const map: Record<string, string> = {
+      data_analyst:     `${base}/temp/Resume_DataAnalyst.pdf`,
+      business_analyst: `${base}/temp/Resume_BusinessAnalyst.pdf`,
+      ai_engineer:      `${base}/temp/Resume_AI.pdf`,
+      data_engineer:    `${base}/temp/Resume_DataEngineer.pdf`,
+      data_scientist:   `${base}/temp/Resume_DataScientist.pdf`,
+    };
+    return map[resumeType || 'data_scientist'] || map['data_scientist'];
   }
 
   private getNextStatus(emailType: string): TrackingStatus {

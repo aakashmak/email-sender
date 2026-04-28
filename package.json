@@ -7,6 +7,7 @@
     "build": "tsc",
     "campaign": "ts-node src/index.ts",
     "campaign:dry-run": "ts-node src/index.ts --dry-run",
+    "import": "ts-node scripts/import-contacts.ts apollo-contacts-export.csv",
     "generate": "ts-node src/campaign/generation-runner.ts",
     "send": "ts-node src/campaign/send-runner.ts",
     "send:dry-run": "ts-node src/campaign/send-runner.ts --dry-run",

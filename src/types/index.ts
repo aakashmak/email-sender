@@ -21,6 +21,9 @@ export interface Contact {
   // Research summary
   research_summary?: string;
 
+  // Resume type matched to contact's role/job posting
+  resume_type?: string;
+
   // Metadata
   created_at?: string;
   updated_at?: string;
@@ -55,6 +58,7 @@ export type TrackingStatus =
 // Generated emails from Claude
 export interface GeneratedEmails {
   research_summary?: string;
+  resume_type?: string;
   initial_email_subject: string;
   initial_email: string;
   follow_up_1_subject: string;

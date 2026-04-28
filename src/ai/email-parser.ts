@@ -30,9 +30,21 @@ export class EmailParser {
 
       // Extract research (optional)
       const researchMatch = normalized.match(
-        /---RESEARCH---\s*([\s\S]*?)\s*---INITIAL_SUBJECT---/
+        /---RESEARCH---\s*([\s\S]*?)\s*---RESUME_TYPE---|---RESEARCH---\s*([\s\S]*?)\s*---INITIAL_SUBJECT---/
       );
-      const research_summary = researchMatch ? researchMatch[1].trim() : undefined;
+      const research_summary = researchMatch ? (researchMatch[1] || researchMatch[2]).trim() : undefined;
+
+      // Extract resume type (optional)
+      const resumeTypeMatch = normalized.match(
+        /---RESUME_TYPE---\s*([\s\S]*?)\s*---INITIAL_SUBJECT---/
+      );
+      const resume_type = resumeTypeMatch
+        ? resumeTypeMatch[1].trim().split('\n')[0].trim().toLowerCase()
+        : 'data_scientist';
+
+      // Normalise to valid values
+      const validResumeTypes = ['data_scientist', 'data_analyst', 'business_analyst', 'ai_engineer', 'data_engineer'];
+      const normalised_resume_type = validResumeTypes.includes(resume_type) ? resume_type : 'data_scientist';
 
       // Extract initial email
       const initialSubjectMatch = normalized.match(
@@ -88,6 +100,7 @@ export class EmailParser {
 
       const result: GeneratedEmails = {
         research_summary,
+        resume_type: normalised_resume_type,
         initial_email_subject: initialSubjectMatch[1].trim(),
         initial_email: initialBodyMatch[1].trim(),
         follow_up_1_subject: followup1SubjectMatch[1].trim(),
