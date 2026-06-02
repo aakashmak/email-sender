@@ -47,6 +47,7 @@ jobs:
           DAILY_LIMIT: ${{ secrets.DAILY_LIMIT }}
           SENDER_NAME: ${{ secrets.SENDER_NAME }}
           SENDER_LINKEDIN: ${{ secrets.SENDER_LINKEDIN }}
+          TRACKING_PIXEL_BASE_URL: ${{ secrets.TRACKING_PIXEL_BASE_URL }}
           FOLLOW_UP_INTERVALS: '3,7,10'
           MAX_FOLLOW_UPS: '3'
         run: npm run send

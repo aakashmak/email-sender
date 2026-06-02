@@ -14,6 +14,7 @@ interface SendEmailOptions {
   resumePath?: string;      // Override default resume path for this send
   threadId?: string;        // Gmail thread ID — threads follow-up into same conversation
   gmailMessageId?: string;  // RFC 2822 Message-ID of previous email for In-Reply-To header
+  trackingPixelUrl?: string; // Open-tracking pixel URL to embed in the email body
 }
 
 function buildSignatures(): { followup: string; initial: string } {
@@ -93,7 +94,7 @@ export class GmailSender {
   }
 
   async sendEmail(options: SendEmailOptions): Promise<SendResult> {
-    const { to, subject, body, emailType, attachResume = false, resumePath, threadId, gmailMessageId } = options;
+    const { to, subject, body, emailType, attachResume = false, resumePath, threadId, gmailMessageId, trackingPixelUrl } = options;
     const effectiveResumePath = resumePath || this.resumePath;
 
     try {
@@ -101,7 +102,7 @@ export class GmailSender {
       const signature = this.getSignature(emailType);
 
       // Build HTML body with signature
-      const htmlBody = this.buildHtmlBody(body, signature);
+      const htmlBody = this.buildHtmlBody(body, signature, trackingPixelUrl);
 
       // Construct the email message
       let message: string;
@@ -171,7 +172,7 @@ export class GmailSender {
     }
   }
 
-  private buildHtmlBody(body: string, signature: string): string {
+  private buildHtmlBody(body: string, signature: string, trackingPixelUrl?: string): string {
     // Convert plain text body to HTML (preserve line breaks)
     const htmlBody = body
       .replace(/&/g, '&amp;')
@@ -179,12 +180,17 @@ export class GmailSender {
       .replace(/>/g, '&gt;')
       .replace(/\n/g, '<br>');
 
+    // Open-tracking pixel (placed last so it loads after the visible content)
+    const pixel = trackingPixelUrl
+      ? `<img src="${trackingPixelUrl}" width="1" height="1" alt="" style="display:none" />`
+      : '';
+
     // Combine body with signature (signature is already HTML from Gmail)
     if (signature) {
-      return `<div>${htmlBody}</div><br><div>${signature}</div>`;
+      return `<div>${htmlBody}</div><br><div>${signature}</div>${pixel}`;
     }
 
-    return `<div>${htmlBody}</div>`;
+    return `<div>${htmlBody}</div>${pixel}`;
   }
 
   private createHtmlMessage(to: string, subject: string, htmlBody: string, inReplyTo?: string): string {
@@ -274,6 +280,45 @@ export class GmailSender {
       }
     } catch (error) {
       console.warn(`Could not add label to message:`, error);
+    }
+  }
+
+  async hasReply(threadId: string): Promise<boolean> {
+    return (await this.getReplyInfo(threadId)).replied;
+  }
+
+  /**
+   * Inspect a thread for inbound replies (messages from anyone other than us).
+   * Returns the number of replies and the timestamp of the first reply.
+   */
+  async getReplyInfo(
+    threadId: string
+  ): Promise<{ replied: boolean; replyCount: number; firstReplyAt: string | null }> {
+    try {
+      const thread = await this.gmail.users.threads.get({
+        userId: 'me',
+        id: threadId,
+        format: 'metadata',
+        metadataHeaders: ['From'],
+      });
+      const messages = thread.data.messages || [];
+      let replyCount = 0;
+      let firstReplyAt: string | null = null;
+
+      // Skip the first message (our send); any subsequent message from someone else is a reply
+      for (const msg of messages.slice(1)) {
+        const from = msg.payload?.headers?.find((h) => h.name === 'From')?.value || '';
+        if (!from.includes(this.senderEmail)) {
+          replyCount++;
+          if (!firstReplyAt && msg.internalDate) {
+            firstReplyAt = new Date(parseInt(msg.internalDate, 10)).toISOString();
+          }
+        }
+      }
+
+      return { replied: replyCount > 0, replyCount, firstReplyAt };
+    } catch {
+      return { replied: false, replyCount: 0, firstReplyAt: null };
     }
   }
 

@@ -4,6 +4,7 @@ import { TrackingManager } from '../db/tracking-manager';
 import { GmailAuthClient } from '../auth/gmail-auth';
 import { GmailSender } from '../email/gmail-sender';
 import { RateLimiter } from '../email/rate-limiter';
+import { generateTrackingId, buildPixelUrl, logSend } from '../db/sends';
 import { Contact, RunResult, TrackingStatus } from '../types';
 
 interface EmailToSend {
@@ -91,10 +92,25 @@ export class SendRunner {
         );
       }
 
+      // Before sending a follow-up, check if the contact has already replied
+      if (!this.config.dryRun && email.type !== 'initial' && record.thread_id) {
+        const replied = await sender!.hasReply(record.thread_id);
+        if (replied) {
+          console.log('  [SKIP] Contact has replied — stopping follow-ups');
+          await trackingManager.updateRecord(email.contact.email, { status: 'replied' });
+          result.skipped++;
+          continue;
+        }
+      }
+
       if (this.config.dryRun) {
         console.log('  [DRY RUN] Would send');
         result.sent++;
       } else {
+        // Generate an open-tracking id + pixel for this send
+        const trackingId = generateTrackingId();
+        const trackingPixelUrl = buildPixelUrl(trackingId);
+
         // Pass thread info for follow-ups to chain them into the same conversation
         const sendResult = await sender!.sendEmail({
           to: email.contact.email,
@@ -105,9 +121,20 @@ export class SendRunner {
           resumePath: this.getResumePath(email.contact.resume_type),
           threadId: email.type !== 'initial' ? record.thread_id || undefined : undefined,
           gmailMessageId: email.type !== 'initial' ? record.gmail_message_id || undefined : undefined,
+          trackingPixelUrl,
         });
 
         if (sendResult.success) {
+          // Log the send for tracking (totals + open-rate join target)
+          await logSend({
+            trackingId,
+            email: email.contact.email,
+            emailType: email.type,
+            subject: email.subject,
+            gmailMessageId: sendResult.gmailMessageId,
+            threadId: sendResult.threadId,
+          });
+
           // Calculate new status and follow-up info
           const newStatus = this.getNextStatus(email.type);
           const followUpCount = this.getFollowUpCount(email.type);
@@ -182,8 +209,8 @@ export class SendRunner {
         continue;
       }
 
-      // Skip completed, error, or bounced
-      if (['completed', 'error', 'bounced'].includes(record.status)) {
+      // Skip completed, error, bounced, or replied
+      if (['completed', 'error', 'bounced', 'replied'].includes(record.status)) {
         continue;
       }
 

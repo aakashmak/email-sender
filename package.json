@@ -11,6 +11,8 @@
     "generate": "ts-node src/campaign/generation-runner.ts",
     "send": "ts-node src/campaign/send-runner.ts",
     "send:dry-run": "ts-node src/campaign/send-runner.ts --dry-run",
+    "scan-replies": "ts-node scripts/scan-replies.ts",
+    "dashboard": "ts-node scripts/dashboard.ts",
     "auth-setup": "ts-node scripts/auth-setup.ts"
   },
   "keywords": [
@@ -32,6 +34,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.0.9",
+    "supabase": "^2.103.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }

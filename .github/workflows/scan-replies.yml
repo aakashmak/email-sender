@@ -1,0 +1,36 @@
+name: Scan for Replies
+
+on:
+  schedule:
+    # Run daily at 14:00 UTC (~8 AM CST), before the send job.
+    - cron: '0 14 * * *'
+
+  # Allow manual triggers from GitHub Actions UI
+  workflow_dispatch:
+
+jobs:
+  scan-replies:
+    runs-on: ubuntu-latest
+    environment: email-sender  # Uses secrets from this GitHub environment
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Scan threads for replies
+        env:
+          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
+          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
+          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: npx ts-node scripts/scan-replies.ts
