@@ -5,6 +5,9 @@ on:
     # Run weekdays at 9:17 AM CST (15:17 UTC)
     # Using minute 17 to avoid high-load times at start of hour
     - cron: '17 15 * * 1-5'
+    # Backup run 1 hour later — covers GitHub runner-allocation failures.
+    # Send runner is idempotent (already-sent contacts skip), so safe to double-fire.
+    - cron: '17 16 * * 1-5'
 
   # Allow manual triggers from GitHub Actions UI
   workflow_dispatch:
