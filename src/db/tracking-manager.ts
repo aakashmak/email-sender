@@ -39,22 +39,37 @@ export class TrackingManager {
   async load(): Promise<void> {
     const supabase = getSupabaseClient();
 
-    const { data, error } = await supabase
-      .from('email_tracking')
-      .select('*')
-      .order('created_at', { ascending: true });
+    // Supabase/PostgREST caps an unpaginated select at 1000 rows by default.
+    // The table has passed that size, so a plain select silently drops the
+    // newest rows (sorted ascending by created_at) — which made recently
+    // tracked contacts look untracked and crashed sends on a duplicate-key
+    // insert. Page through with .range() until a page comes back short.
+    const PAGE_SIZE = 1000;
+    const allRows: SupabaseTrackingRecord[] = [];
+    let from = 0;
 
-    if (error) {
-      throw new Error(`Failed to load tracking records: ${error.message}`);
+    while (true) {
+      const { data, error } = await supabase
+        .from('email_tracking')
+        .select('*')
+        .order('created_at', { ascending: true })
+        .range(from, from + PAGE_SIZE - 1);
+
+      if (error) {
+        throw new Error(`Failed to load tracking records: ${error.message}`);
+      }
+
+      const page = (data as SupabaseTrackingRecord[]) || [];
+      allRows.push(...page);
+      if (page.length < PAGE_SIZE) break;
+      from += PAGE_SIZE;
     }
 
     this.records.clear();
 
-    if (data) {
-      for (const row of data as SupabaseTrackingRecord[]) {
-        const record = toTrackingRecord(row);
-        this.records.set(record.email, record);
-      }
+    for (const row of allRows) {
+      const record = toTrackingRecord(row);
+      this.records.set(record.email, record);
     }
 
     console.log(`Loaded ${this.records.size} tracking records from Supabase`);

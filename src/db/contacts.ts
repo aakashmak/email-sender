@@ -21,6 +21,36 @@ interface SupabaseContact {
   updated_at: string;
 }
 
+// Supabase/PostgREST caps an unpaginated select at 1000 rows by default.
+// Once a table passes that size, a plain select silently drops rows instead
+// of erroring — page through with .range() so callers always get everything.
+const PAGE_SIZE = 1000;
+
+async function fetchAllContacts(enrichedFilter?: boolean): Promise<SupabaseContact[]> {
+  const supabase = getSupabaseClient();
+  const allRows: SupabaseContact[] = [];
+  let from = 0;
+
+  while (true) {
+    let query = supabase.from('contacts').select('*').order('created_at', { ascending: true });
+    if (enrichedFilter !== undefined) {
+      query = query.eq('is_emails_enriched', enrichedFilter);
+    }
+    const { data, error } = await query.range(from, from + PAGE_SIZE - 1);
+
+    if (error) {
+      throw new Error(`Failed to fetch contacts: ${error.message}`);
+    }
+
+    const page = (data as SupabaseContact[]) || [];
+    allRows.push(...page);
+    if (page.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+
+  return allRows;
+}
+
 function toContact(row: SupabaseContact): Contact {
   return {
     email: row.email.toLowerCase(),
@@ -45,77 +75,25 @@ function toContact(row: SupabaseContact): Contact {
 
 // Get all contacts
 export async function getContacts(): Promise<Contact[]> {
-  const supabase = getSupabaseClient();
-
   console.log('Querying contacts table...');
-
-  const { data, error } = await supabase
-    .from('contacts')
-    .select('*')
-    .order('created_at', { ascending: true });
-
-  console.log('Query result - data:', data?.length ?? 0, 'rows, error:', error?.message ?? 'none');
-
-  if (error) {
-    throw new Error(`Failed to fetch contacts: ${error.message}`);
-  }
-
-  if (!data || data.length === 0) {
-    console.log('No contacts found in database');
-    return [];
-  }
-
-  const contacts = data.map((row: SupabaseContact) => toContact(row));
-  console.log(`Loaded ${contacts.length} contacts from Supabase`);
-  return contacts;
+  const rows = await fetchAllContacts();
+  console.log(`Loaded ${rows.length} contacts from Supabase`);
+  return rows.map(toContact);
 }
 
 // Get contacts that need email generation
 export async function getUnenrichedContacts(): Promise<Contact[]> {
-  const supabase = getSupabaseClient();
-
   console.log('Querying unenriched contacts...');
-
-  const { data, error } = await supabase
-    .from('contacts')
-    .select('*')
-    .eq('is_emails_enriched', false)
-    .order('created_at', { ascending: true });
-
-  console.log('Query result - data:', data?.length ?? 0, 'unenriched contacts');
-
-  if (error) {
-    throw new Error(`Failed to fetch unenriched contacts: ${error.message}`);
-  }
-
-  if (!data || data.length === 0) {
-    return [];
-  }
-
-  return data.map((row: SupabaseContact) => toContact(row));
+  const rows = await fetchAllContacts(false);
+  console.log('Query result - data:', rows.length, 'unenriched contacts');
+  return rows.map(toContact);
 }
 
 // Get contacts with emails ready to send
 export async function getEnrichedContacts(): Promise<Contact[]> {
-  const supabase = getSupabaseClient();
-
   console.log('Querying enriched contacts...');
-
-  const { data, error } = await supabase
-    .from('contacts')
-    .select('*')
-    .eq('is_emails_enriched', true)
-    .order('created_at', { ascending: true });
-
-  if (error) {
-    throw new Error(`Failed to fetch enriched contacts: ${error.message}`);
-  }
-
-  if (!data || data.length === 0) {
-    return [];
-  }
-
-  return data.map((row: SupabaseContact) => toContact(row));
+  const rows = await fetchAllContacts(true);
+  return rows.map(toContact);
 }
 
 // Get a single contact by email
