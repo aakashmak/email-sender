@@ -4,10 +4,13 @@ This document describes the Supabase PostgreSQL database schema used in the Cold
 
 ## Overview
 
-The project uses Supabase as its database backend with 3 tables:
+The project uses Supabase as its database backend with 6 tables:
 - `contacts` - Contact information and generated emails (email as PK)
 - `email_tracking` - Status and history of sent emails
 - `archived_contacts` - Contacts that have been replied, unsubscribed, or completed (same schema as contacts + `archived_at`)
+- `bounced_emails` - Permanent blocklist of addresses that bounced ("address not found", DNS failure) — `import-contacts.ts` skips any email in this table even if it reappears in a fresh CSV export
+- `email_sends` - One row per actual send (source of truth for "total emails"); holds the open-tracking `tracking_id`
+- `email_opens` - One row per open event, linked to a send via `tracking_id`
 
 ---
 
@@ -68,6 +71,9 @@ Tracks status and history of emails sent to each contact.
 | `follow_up_count` | INTEGER | No | 0 | Number of follow-ups sent |
 | `next_follow_up_date` | DATE | Yes | null | When next follow-up is due |
 | `error_message` | TEXT | Yes | null | Error details if failed |
+| `replied_at` | TIMESTAMPTZ | Yes | null | Timestamp of first real (non-OOO) reply (set by reply scan) |
+| `reply_count` | INTEGER | No | 0 | Number of real inbound replies (set by reply scan) |
+| `ooo_count` | INTEGER | No | 0 | Number of out-of-office auto-replies seen (set by reply scan) |
 | `created_at` | TIMESTAMPTZ | No | now() | Record creation time |
 | `updated_at` | TIMESTAMPTZ | No | now() | Last update time |
 
@@ -137,6 +143,39 @@ Contacts that have replied, unsubscribed, or completed the full sequence. Same s
 - Bulk archive all completed → run `npx ts-node scripts/archive-completed.ts`
 
 The `email_tracking` record is **preserved** when a contact is archived (FK constraint was intentionally dropped in migration `20260413000001_drop_tracking_fk.sql`).
+
+---
+
+### 4. `email_sends`
+
+One row per actual email sent. This is the **source of truth for "total emails sent"** and the join target for open tracking. Written by the send runner (`logSend()` in `src/db/sends.ts`).
+
+| Column | Type | Nullable | Description |
+|--------|------|----------|-------------|
+| `id` | BIGINT (identity) | No | Primary key |
+| `tracking_id` | TEXT | No | Opaque token embedded in the open-tracking pixel (unique) |
+| `email` | TEXT | No | Recipient |
+| `email_type` | TEXT | No | `initial` / `follow_up_1` / `follow_up_2` / `follow_up_3` |
+| `subject` | TEXT | Yes | Subject line sent |
+| `gmail_message_id` | TEXT | Yes | RFC 2822 Message-ID |
+| `thread_id` | TEXT | Yes | Gmail thread ID |
+| `sent_at` | TIMESTAMPTZ | No | When the send happened (default now()) |
+
+---
+
+### 5. `email_opens`
+
+One row per open event. The open-tracking Edge Function (`supabase/functions/track-open`) inserts a row each time the pixel loads.
+
+| Column | Type | Nullable | Description |
+|--------|------|----------|-------------|
+| `id` | BIGINT (identity) | No | Primary key |
+| `tracking_id` | TEXT | No | Links to `email_sends.tracking_id` |
+| `opened_at` | TIMESTAMPTZ | No | When the open was recorded (default now()) |
+| `user_agent` | TEXT | Yes | Requesting client's user agent |
+| `ip` | TEXT | Yes | Requesting IP (x-forwarded-for) |
+
+> **Open-tracking caveat:** Gmail proxies and caches images through Google's servers, so `opened_at` is approximate (often recorded at delivery) and repeat opens may not register. Treat open numbers as directional.
 
 ---
 

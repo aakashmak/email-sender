@@ -19,6 +19,8 @@ Cold email campaign system with AI-powered email generation. Uses Claude CLI to 
 
 ## Two Workflows
 
+> **Tracking dashboard:** `npm run dashboard` opens a local web dashboard (totals, follow-up funnel, opens with timestamps, replies). Reads from Supabase. See "Email Tracking Dashboard" below.
+
 ### 1. Generate Emails (Local)
 ```bash
 npm run generate
@@ -49,7 +51,11 @@ npm run send:dry-run  # Preview
 | `src/ai/email-parser.ts` | Parses 4 emails from Claude output |
 | `src/db/contacts.ts` | Supabase contact queries |
 | `src/db/tracking-manager.ts` | Email tracking status management |
-| `src/email/gmail-sender.ts` | Gmail API integration |
+| `src/db/sends.ts` | Logs each send to `email_sends` + builds open-tracking pixel URL |
+| `src/email/gmail-sender.ts` | Gmail API integration (embeds tracking pixel, `getReplyInfo`) |
+| `scripts/scan-replies.ts` | Daily reply scan (records `replied_at`/`reply_count`; delays instead of stopping follow-ups for out-of-office auto-replies via `ooo_count`) |
+| `scripts/dashboard.ts` | Local dashboard server (`/api/stats` + serves `dashboard/index.html`) |
+| `supabase/functions/track-open/` | Edge Function: open-tracking pixel endpoint |
 | `data/prompts/*.md` | Email style guidelines |
 
 ## Utility Scripts
@@ -67,11 +73,22 @@ npx ts-node scripts/reset-contact.ts email
 # View generated emails
 npx ts-node scripts/view-emails.ts email
 
+# Open the tracking dashboard (totals, opens, replies) at http://localhost:4545
+npm run dashboard
+
+# Scan Gmail threads for replies (records replied_at + reply_count)
+npm run scan-replies
+
 # Stop follow-ups and archive a contact (prospect replied/unsubscribed)
 npx ts-node scripts/stop-and-archive.ts email
 
 # Bulk archive all completed contacts
 npx ts-node scripts/archive-completed.ts
+
+# Permanently block an address that bounced ("address not found", DNS failure) —
+# removes it from contacts/tracking/archived and blocklists it so future
+# CSV imports skip it even if it reappears in a fresh export
+npx ts-node scripts/mark-bounced.ts email "reason"
 
 # Refresh Gmail OAuth token (run every ~7 days, auto-updates GitHub secret)
 npx ts-node scripts/auth-setup.ts
@@ -122,6 +139,33 @@ Key style points:
 | `SENDER_EMAIL` | Send | Gmail address |
 | `DAILY_LIMIT` | Send | Max emails per run (default: 50) |
 | `FOLLOW_UP_INTERVALS` | Send | Days between follow-ups (default: 3,7,10) |
+| `TRACKING_PIXEL_BASE_URL` | Send | Open-tracking Edge Function URL. If unset, no pixel is embedded (open tracking off). e.g. `https://<ref>.supabase.co/functions/v1/track-open` |
+| `DASHBOARD_PORT` | Dashboard | Local dashboard port (default: 4545) |
+| `OPEN_PREFETCH_WINDOW_SECONDS` | Dashboard | Opens within this many seconds of the send are treated as Gmail's automatic bot prefetch, not a human open (default: 90) |
+
+## Email Tracking Dashboard
+
+Local web dashboard for campaign metrics. Run `npm run dashboard` and open `http://localhost:4545`.
+
+Shows: total emails sent (by type), the follow-up funnel (by status), open rate + open timestamps, and replies (count, rate, timestamps). Auto-refreshes every 30s.
+
+**Data sources:**
+- **Totals / follow-ups** — `email_sends` and `email_tracking`.
+- **Opens** — the open-tracking pixel (`<img>` embedded in each email) hits the `track-open` Edge Function, which logs `email_opens`. The dashboard splits these into **human opens** vs **Gmail bot prefetch** using timing: an open within `OPEN_PREFETCH_WINDOW_SECONDS` (default 90s) of the send is the automatic Google proxy prefetch; later opens are counted as human. This can't be perfect — both go through Google's proxy with the same user-agent, and Gmail serves many human opens from cache that never reach us — so "human opens" is directional and undercounts.
+- **Replies** — populated by `npm run scan-replies` (run daily by `.github/workflows/scan-replies.yml`), which scans Gmail threads and records `replied_at`/`reply_count`. A reply that's an out-of-office auto-responder (detected by subject/snippet keywords like "out of office", "automatic reply", "on leave") does **not** stop follow-ups — instead `next_follow_up_date` is pushed to the day after the stated return date (or +5 days if no date is found), tracked via `ooo_count` so the same auto-reply isn't reprocessed on the next scan.
+
+**One-time setup for open tracking:**
+```bash
+# 1. Apply the new migrations to your Supabase project
+supabase db push
+
+# 2. Deploy the open-tracking Edge Function (public — verify_jwt=false in config.toml)
+supabase functions deploy track-open
+
+# 3. Set TRACKING_PIXEL_BASE_URL locally (.env) and as a GitHub `email-sender` env secret:
+#    https://<project-ref>.supabase.co/functions/v1/track-open
+```
+Already-sent emails have no pixel, so opens only accrue for emails sent after setup. The reply scan backfills replies for any thread still visible in Gmail.
 
 ## Gotchas
 
